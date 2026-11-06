@@ -1,0 +1,11 @@
+title,description,priority,category
+Cannot connect to WiFi,Unable to connect to office wireless network,high,network
+Laptop running slowly,System performance has become very slow,medium,hardware
+Email not syncing,Outlook is not receiving new emails,high,email
+Printer not working,Office printer is not responding,low,hardware
+VPN connection failed,Unable to connect to company VPN,urgent,network
+Password reset request,Need help resetting account password,low,account
+Software installation,Need approval for development software,medium,software
+Monitor flickering,External monitor keeps flickering,medium,hardware
+System access issue,Unable to access internal application,high,account
+Internet disconnected,Office internet connection is down,urgent,network
