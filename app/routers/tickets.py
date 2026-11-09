@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -18,6 +18,7 @@ from app.schemas.ticket import (
 )
 from app.services.assignment_service import assign_ticket
 from app.services.comment_service import add_ticket_comment
+from app.services.notification_service import create_notification
 from app.services.status_service import update_ticket_status
 from app.services.ticket_detail_service import get_ticket_details
 from app.services.ticket_list_service import get_ticket_list
@@ -102,25 +103,46 @@ async def create_ticket_comment(
 async def assign_ticket_endpoint(
     ticket_id: int,
     assignment: TicketAssign,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_roles("agent", "admin")),
     session: AsyncSession = Depends(get_db),
 ):
-    return await assign_ticket(
+    ticket = await assign_ticket(
         session=session,
         ticket_id=ticket_id,
         agent_id=assignment.assigned_to,
     )
+
+    background_tasks.add_task(
+        create_notification,
+        ticket.assigned_to,
+        ticket.id,
+        f"You have been assigned ticket #{ticket.id}: {ticket.title}",
+    )
+
+    return ticket
 
 
 @router.patch("/{ticket_id}/status", response_model=TicketResponse)
 async def change_ticket_status(
     ticket_id: int,
     status_data: TicketStatusUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_roles("agent", "admin")),
     session: AsyncSession = Depends(get_db),
 ):
-    return await update_ticket_status(
+    ticket = await update_ticket_status(
         session=session,
         ticket_id=ticket_id,
         new_status=status_data.status,
     )
+
+    if ticket.status == "resolved":
+        background_tasks.add_task(
+            create_notification,
+            ticket.created_by,
+            ticket.id,
+            f"Your ticket #{ticket.id} has been resolved.",
+        )
+
+    return ticket

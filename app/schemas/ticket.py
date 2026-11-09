@@ -67,3 +67,12 @@ class TicketStatusUpdate(BaseModel):
         "resolved",
         "closed",
     ]
+
+
+class SLAReportItem(BaseModel):
+    ticket_id: int
+    title: str
+    priority: str
+    due_at: datetime
+    hours_overdue: float
+    assigned_to: int | None

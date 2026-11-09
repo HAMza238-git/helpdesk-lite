@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -113,3 +115,18 @@ async def count_agent_in_progress_tickets(
         )
     )
     return result.scalar_one()
+
+
+async def get_overdue_tickets(session: AsyncSession):
+    now = datetime.now(UTC)
+
+    result = await session.execute(
+        select(Ticket)
+        .where(
+            Ticket.status == "open",
+            Ticket.due_at < now,
+        )
+        .order_by(Ticket.due_at.asc())
+    )
+
+    return list(result.scalars().all())
